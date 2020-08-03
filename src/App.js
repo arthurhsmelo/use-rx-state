@@ -1,24 +1,41 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import "./App.css";
+
+function useRxState(fn, ...dependencies) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const updater = useMemo(() => (typeof fn === "function" ? fn() : fn), [...dependencies]);
+  let st = useRef(updater);
+
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    st.current = updater;
+  }, [updater]);
+
+  return st.current;
+}
 
 function App() {
+  const [text, setText] = useState("");
+  const chars = useRxState(() => {
+    // console.log(text.length);
+    if (text.length < 5) {
+      return "Not enough";
+    } else {
+      return text.length;
+    }
+  }, [text]);
+  const words = useRxState(text.split(" ").length, text);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>{text}</h1>
+      <p>Character Count: {chars}</p>
+      <p>Word Count: {words}</p>
+      <input defaultValue={text} onChange={(ev) => setText(ev.target.value)} />
     </div>
   );
 }
